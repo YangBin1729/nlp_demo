@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}文本摘要{% endblock %}
+
+
+
+{% block content %}
+    <div class="container">
+        <div class="well">
+            {{ wtf.quick_form(form) }}
+        </div>
+        {% if results %}
+
+            <div class="well">
+
+                <h3>抽取式摘要</h3>
+
+                <ul class="nav nav-tabs">
+                    <li class="active"><a data-toggle="tab" href="#menu1">50%</a></li>
+                    <li><a data-toggle="tab" href="#menu2">20%</a></li>
+                    <li><a data-toggle="tab" href="#menu3">10%</a></li>
+                </ul>
+
+                <div class="tab-content">
+                    <div id="menu1" class="tab-pane fade in active">
+                        {% for r in results %}
+                            {{ r[1] }}<br>
+                        {% endfor %}
+                    </div>
+
+                    <div id="menu2" class="tab-pane fade">
+                        {% for r in results[:2] %}
+                            {{ r[1] }}<br>
+                        {% endfor %}
+                    </div>
+
+                    <div id="menu3" class="tab-pane fade">
+                        {{ results[0][1] }}
+                    </div>
+                </div>
+            </div>
+            <div class="well">
+                <h3>生成式摘要</h3>
+                <p>todo......</p>
+
+            </div>
+        {% endif %}
+
+
+    </div>
+{% endblock %}
+

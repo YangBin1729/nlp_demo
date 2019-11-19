@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}观点提取{% endblock %}
+
+
+
+{% block content %}
+    <div class="container">
+        <div class="well">
+            {{ wtf.quick_form(form) }}
+        </div>
+
+
+        {% if results %}
+            <div class="well">
+                <h3>人物观点</h3>
+                <table class="table">
+                    <tr>
+                        <td>人物</td>
+                        <td>观点</td>
+                    </tr>
+                    {% for result in results %}
+                        <tr>
+                            <td>{{ result[0] }}</td>
+                            <td>{{ result[1] }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endif %}
+
+    </div>
+{% endblock %}
+

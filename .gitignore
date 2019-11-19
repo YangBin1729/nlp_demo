@@ -1,0 +1,6 @@
+/venv/
+/models/classifier/*
+/models/ltp/*
+/models/word2vec/*
+.idea
+__pycache__
