@@ -4,3 +4,6 @@
 /models/word2vec/*
 .idea
 __pycache__
+
+/classifiers/dish_look/1/*
+/classifiers/dish_portion/1/*
