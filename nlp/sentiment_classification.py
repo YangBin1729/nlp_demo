@@ -1,15 +1,14 @@
-import glob
+import json
+import os
 import pickle
 import re
 import string
+
+import requests
 import zhconv
 import jieba
-import numpy as np
 from keras.preprocessing import sequence
-import keras.backend.tensorflow_backend as K
-from keras.models import load_model
 from config import config
-import threading
 
 
 class Result:
@@ -55,7 +54,8 @@ class Result:
                 layer1_zh = self.label2zh[layer1]
                 layer1_dict = {'name': layer1_zh, 'children': []}
                 for layer2 in self.label_layers[layer1]:
-                    probs = prob_dict.get(layer2, np.zeros(4))
+                    probs = prob_dict.get(
+                        layer2,{"predictions": [[0, 0, 0, 0]]})["predictions"][0]
                     label = ['未提及', '负向', '中性', '正向']
                     layer2_zh = self.label2zh[layer2]
                     prob_with_label = [{'name': l, 'value': str(round(v, 2))}
@@ -70,17 +70,17 @@ class Result:
 
 class SentimentClassifier:
     def __init__(self):
-        clfs_path = glob.glob(f"{config['production'].CLASSIFIER_DIR}/*.h5")
-        
+        clfs_dir = config['production'].CLASSIFIER_DIR
+        clfs_path = {p: os.path.join(clfs_dir, p) for p in os.listdir(clfs_dir)
+                     if os.path.isdir(os.path.join(clfs_dir, p))}
+        base_api = 'http://localhost:8012/v1/models/{}:predict'
+        clfs_api = {cate: base_api.format(cate) for cate in clfs_path}
+    
         with open(config['production'].TOKENIZER, 'rb') as f:
             tokenizer = pickle.load(f)
-        
+    
         self.tokenizer = tokenizer
-        self.clfs_path = clfs_path
-        
-        self.results = {}
-        
-        # self.clfs_name = [ re.findall(r'.+/(\w+)\.h5', path)[0] ]
+        self.clfs_api = clfs_api
     
     def preprocess(self, text):
         punct = r"，。！？、；：“”\n＂＃＄％＆＇（）＊＋－／＜＝＞＠［＼］＾＿｀｛｜｝～｟｠｢｣､" \
@@ -108,40 +108,37 @@ class SentimentClassifier:
                 sent = cut_join(sent)
                 results.append(sent)
         return ' '.join(results)
+
+    def text2vector(self, text):
+        text = self.preprocess(text)
+        text_seq = self.tokenizer.texts_to_sequences([text])
+        text_seq = sequence.pad_sequences(text_seq, maxlen=250)
+        return text_seq
+
+    def predict(self, text):
+        results = {}
+        X_input = self.text2vector(text)
     
-    def predict(self, input_):
-        input_ = self.preprocess(input_)
-        input_list = self.tokenizer.texts_to_sequences([input_])
-        X_input = sequence.pad_sequences(input_list, maxlen=250)
-        
-        thread_list = []
-        for path in self.clfs_path:
-            t = threading.Thread(target=self.single_predict,
-                                 args=(path, X_input))
-            thread_list.append(t)
-        for t in thread_list:
-            t.setDaemon(True)
-            t.start()
-        for t in thread_list:
-            t.join()
-        return self.format_probs(self.results)
+        X_input = X_input.astype('int').tolist()[0]
+        print(X_input)
+        payload = {"instances": [{'input_text': X_input}]}
+        for cate in self.clfs_api.keys():
+            r = self.single_predict(cate, payload)
+            results[cate] = r
+        return self.format_probs(results)
     
-    def single_predict(self, path, x):
-        K._SYMBOLIC_SCOPE.value = True
-        name = re.findall(r'.+/(\w+)\.h5', path)[0]
-        print(f"Predicting Model for {name}:")
-        model = load_model(path)
-        print(f"Model for {name} loaded...")
-        model._make_predict_function()
-        y_pred_prob = model.predict(x, verbose=1)
-        self.results[name] = y_pred_prob[0].tolist()
-        print(y_pred_prob[0])
-        print('-' * 80)
-        print('Program a is running at  %s .' % threading.current_thread().name)
+    def single_predict(self, cate, payload):
+        api = self.clfs_api[cate]
+        r = requests.post(api, json=payload)
+        if r.ok:
+            print(cate, r.content.decode('utf-8'))
+            result = json.loads(r.content.decode('utf-8'))
+        else:
+            result = {"predictions": [[0.0, 0.0, 0.0, 0.0]]}
+        return result
     
     def format_probs(self, probs):
         r = Result()
         results = r.render(probs, mode='tree')
-        print(results)
         
         return results

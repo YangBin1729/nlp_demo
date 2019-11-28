@@ -1,6 +1,6 @@
 import json
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from wtforms import SubmitField, TextAreaField
 from wtforms.validators import DataRequired
 from flask_bootstrap import Bootstrap
@@ -8,11 +8,12 @@ from flask_wtf import FlaskForm
 from nlp.opinion_extraction import news_parser
 from nlp.text_summarization import TextSummarizer
 from nlp.sentiment_classification import SentimentClassifier
+from nlp.chatbot import ChatBot
 from config import config
 
 text_summarizer = TextSummarizer()
 sentiment_classifier = SentimentClassifier()
-
+bank_bot = ChatBot()
 bootstrap = Bootstrap()
 
 DEFAULT_EXTRACTION = """小明说，今天天气不错。"""
@@ -99,9 +100,20 @@ def classify():
         results = sentiment_classifier.predict(content)
         results = json.dumps(results)
     return render_template('classify.html', form=form, results=results)
-    
+
+@app.route("/chat")
+def chat():
+    return render_template("chat.html")
+
+
+@app.route("/get")
+def get_bot_response():
+    userText = request.args.get('msg')
+    response = bank_bot.get_response(userText)
+    return str(response)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9000)
     # http_server = WSGIServer(('0.0.0.0', 5000), app)
     # http_server.serve_forever()
+    

@@ -18,6 +18,10 @@ class DevelopmentConfig(Config):
     CLASSIFIER_DIR = os.path.join(MODEL_DIR, 'classifier')
     TOKENIZER = os.path.join(CLASSIFIER_DIR, 'tokenizer.pickle')
 
+    DATA_DIR = os.path.join(basedir, 'datasets')
+    corpus_path = os.path.join(DATA_DIR, 'qa_corpus.csv')
+    stopwords_path = os.path.join(DATA_DIR, 'stopword.txt')
+
 
 class ProductionConfig(Config):
     DEBUG = False
@@ -25,8 +29,12 @@ class ProductionConfig(Config):
     Word2Vec_DIR = os.path.join(MODEL_DIR,
                                 'word2vec/wiki_corpus_above200.model')
     LTP_DATA_DIR = os.path.join(MODEL_DIR, 'ltp')
-    CLASSIFIER_DIR = os.path.join(MODEL_DIR, 'classifier')
-    TOKENIZER = os.path.join(CLASSIFIER_DIR, 'tokenizer.pickle')
+    CLASSIFIER_DIR = r'/home/student/project/project-01/noam/project01' \
+                     r'/classifiers'
+    TOKENIZER = os.path.join(MODEL_DIR, 'classifier/tokenizer.pickle')
 
+    DATA_DIR = os.path.join(basedir, 'datasets')
+    corpus_path = os.path.join(DATA_DIR, 'qa_corpus.csv')
+    stopwords_path = os.path.join(DATA_DIR, 'stopword.txt')
 
 config = {'development': DevelopmentConfig, 'production': ProductionConfig, }

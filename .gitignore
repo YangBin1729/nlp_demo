@@ -7,3 +7,4 @@ __pycache__
 
 /classifiers/dish_look/1/*
 /classifiers/dish_portion/1/*
+/datasets/qa_corpus.csv
